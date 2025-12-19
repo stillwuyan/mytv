@@ -1,0 +1,302 @@
+body {
+    font-family: 'Microsoft YaHei', sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #f4f4f4;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.artplayer {
+    width: 100%;
+    /* 移除固定高度，使用padding-top实现16:9宽高比 */
+    height: 0;
+    padding-top: 56.25%; /* 16:9 宽高比 (9/16 = 0.5625) */
+    background-color: #000;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    overflow: hidden;
+    /* 添加相对定位，用于内部视频播放器的绝对定位 */
+    position: relative;
+}
+
+/* 添加ArtPlayer播放器容器的内部包装样式 */
+.artplayer-app {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/* 调整返回按钮位置到播放器下方 */
+.player-controls {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.back-button {
+    padding: 8px 15px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.back-button:hover {
+    background: #0056b3;
+}
+
+.video-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.video-item {
+    background: white;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.video-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.video-title {
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 8px;
+    line-height: 1.4;
+}
+
+.video-info {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.video-content {
+    font-size: 13px;
+    color: #444;
+    margin-top: 10px;
+    line-height: 1.4;
+    max-height: 60px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+}
+
+.source-tabs {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.tab-button {
+    padding: 10px;
+    border: 1px solid #ddd;
+    background: #f8f9fa;
+    border-radius: 4px;
+    cursor: pointer;
+    /* 调整宽度为自适应 */
+    width: 100%;
+    text-align: center;
+    transition: all 0.2s ease;
+    /* 确保文本不换行 */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    /* 添加与episode-item一致的字体大小 */
+    font-size: 12px;
+}
+
+.tab-button.active {
+    background: #007bff;
+    color: white;
+    border-color: #007bff;
+    /* 添加激活状态的阴影效果 */
+    box-shadow: 0 2px 4px rgba(0,123,255,0.3);
+}
+
+/* 添加悬停效果，与episode-item保持一致 */
+.tab-button:hover:not(.active) {
+    background: #e9ecef;
+    border-color: #007bff;
+    /* 移除原有的transform效果 */
+    /* transform: translateY(-1px); */
+}
+.source-content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+}
+
+.source-header {
+    margin-bottom: 19px;
+    padding: -1;
+    /* 添加美观的字体 */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.source-header > div:first-child {
+    font-size: 19px;
+    font-weight: bold;
+    color: #332;
+    margin-bottom: 7px;
+    line-height: 1.0;
+}
+
+.source-header .video-info {
+    font-size: 13px;
+    color: #665;
+    margin-bottom: 11px;
+    padding: 5px 0;
+    border-bottom: 0px solid #eee;
+}
+
+.source-header .video-content {
+    font-size: 13px;
+    color: #554;
+    line-height: 1.5;
+    padding: 15px;
+    background: #f8f9f9;
+    border-radius: 5px;
+    /* 移除高度限制，让内容自适应 */
+    max-height: none;
+    overflow: visible;
+    /* 移除文本截断样式 */
+    text-overflow: clip;
+    display: block;
+    -webkit-line-clamp: none;
+    -webkit-box-orient: horizontal;
+    /* 添加合适的边距和边框 */
+    border: 1px solid #e9ecef;
+}
+
+.source-item {
+    background: white;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    /* 移除固定宽度，让宽度自适应 */
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.episode-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.episode-item {
+    background: #f8f9fa;
+    padding: 10px;
+    border-radius: 4px;
+    text-align: center;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background-color 0.2s;
+}
+
+.episode-item:hover {
+    background: #e9ecef;
+}
+
+.hidden {
+    display: none;
+}
+
+/* 搜索容器样式 */
+.search-container {
+    display: flex;
+    align-items: center;
+    margin-left: 15px;
+    gap: 8px;
+}
+
+/* 搜索输入框样式 */
+#searchInput {
+    padding: 8px 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 6px;
+    width: 120px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    outline: none;
+}
+
+#searchInput:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+/* 搜索按钮样式 */
+.search-button {
+    padding: 8px 15px;
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.search-button:hover {
+    background: linear-gradient(135deg, #218838, #1aa179);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.search-button:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* 添加导航按钮样式 */
+.art-control-prev,
+.art-control-next {
+    color: white !important;
+    font-size: 14px !important;
+    padding: 8px 12px !important;
+    background: rgba(0, 0, 0, 0.5) !important;
+    border-radius: 4px !important;
+    margin: 0 5px !important;
+}
+
+.art-control-prev:hover,
+.art-control-next:hover {
+    background: rgba(0, 0, 0, 0.7) !important;
+}
+
+/* 在episode-item样式后添加高亮样式 */
+.episode-item.active {
+    background: #007bff;
+    color: white;
+    font-weight: bold;
+}
+
+.episode-item.active:hover {
+    background: #0056b3;
+}

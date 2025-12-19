@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyTV</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/artplayer/dist/artplayer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="artplayer" id="videoPlayer">
+            <div class="artplayer-app"></div>
+        </div>
+
+        <div class="player-controls">
+            <button id="backButton" class="back-button hidden">返回</button>
+            <div class="search-container">
+                <button id="searchButton" class="search-button">搜索</button>
+                <input type="text" id="searchInput" placeholder="输入搜索关键词" value="凡人修仙传">
+            </div>
+        </div>
+
+        <div id="videoListContainer">
+            <div class="video-list" id="videoList"></div>
+        </div>
+
+        <div id="sourceListContainer" class="hidden">
+            <div class="source-tabs" id="sourceTabs"></div>
+            <div class="source-content" id="sourceContent"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
