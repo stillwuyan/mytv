@@ -282,6 +282,16 @@ function initArtPlayer(url, playlist = [], currentIndex = 0) {
             }
         }
     });
+
+    // 双击全屏功能
+    let lastClickTime = 0;
+    artPlayer.on('click', () => {
+        const currentTime = new Date().getTime();
+        if (currentTime - lastClickTime < 500) { // 300ms内双击
+            artPlayer.fullscreen = !artPlayer.fullscreen;
+        }
+        lastClickTime = currentTime;
+    });
 }
 
 // 播放上一集
