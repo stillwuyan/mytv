@@ -229,9 +229,6 @@ bool WebServer::search(const std::string& key) {
                 std::cerr << "HTTP状态码: " << client.getLastStatusCode() << std::endl;
                 std::cerr << "请求命令：" << url << std::endl;
             }
-
-            // 添加延迟避免请求过快
-            sleep(1);
         }
     } catch (const std::exception& e) {
         std::cerr << "程序异常: " << e.what() << std::endl;
