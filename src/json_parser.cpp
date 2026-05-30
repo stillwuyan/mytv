@@ -1,118 +1,107 @@
 #include "json_parser.h"
-#include <fstream>
-#include <filesystem>
-#include <iostream>
 #include <algorithm>
+#include <chrono>
+#include <ctime>
+#include <filesystem>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <mutex>
 #include <sstream>
 #include <utility>
-#include <cassert>
+
+namespace {
+constexpr const char* kLogModule = "JsonParser";
+
+enum class LogLevel {
+    Info,
+    Error
+};
+
+std::mutex logMutex;
+
+template <typename... Args>
+void logMessage(LogLevel level, Args&&... args) {
+    std::ostringstream buffer;
+    (buffer << ... << std::forward<Args>(args));
+
+    const auto now = std::chrono::system_clock::now();
+    const std::time_t nowTime = std::chrono::system_clock::to_time_t(now);
+    std::tm timeInfo{};
+#ifdef _WIN32
+    localtime_s(&timeInfo, &nowTime);
+#else
+    localtime_r(&nowTime, &timeInfo);
+#endif
+
+    std::ostringstream timestamp;
+    timestamp << std::put_time(&timeInfo, "%Y-%m-%d %H:%M:%S");
+
+    std::lock_guard<std::mutex> lock(logMutex);
+    std::ostream& stream = level == LogLevel::Error ? std::cerr : std::cout;
+    stream << '[' << timestamp.str() << "] [" << kLogModule << "] "
+           << (level == LogLevel::Error ? "[ERROR] " : "[INFO] ")
+           << buffer.str() << std::endl;
+}
+
+template <typename... Args>
+void logInfo(Args&&... args) {
+    logMessage(LogLevel::Info, std::forward<Args>(args)...);
+}
+
+template <typename... Args>
+void logError(Args&&... args) {
+    logMessage(LogLevel::Error, std::forward<Args>(args)...);
+}
+}
 
 JsonParser::JsonParser() : isParsed_(false) {}
 
-JsonParser::~JsonParser() {}
-
 bool JsonParser::parseFromFile(const std::string& filePath) {
+    isParsed_ = false;
+    data_ = json();
+
     std::ifstream file(filePath);
     if (!file.is_open()) {
-        std::cerr << "无法打开文件: " << filePath << std::endl;
+        logError("无法打开文件: ", filePath);
         return false;
     }
 
     try {
         data_ = json::parse(file);
-        source_ = std::filesystem::path(filePath).filename().stem();
+        source_ = std::filesystem::path(filePath).filename().stem().string();
         isParsed_ = true;
         return true;
     } catch (const json::parse_error& e) {
-        std::cerr << "JSON解析错误: " << e.what() << std::endl;
+        logError("JSON解析错误: file=", filePath, ", error=", e.what());
         return false;
     }
-}
-
-bool JsonParser::parseFromString(const std::string& jsonString) {
-    try {
-        data_ = json::parse(jsonString);
-        isParsed_ = true;
-        return true;
-    } catch (const json::parse_error& e) {
-        std::cerr << "JSON解析错误: " << e.what() << std::endl;
-        return false;
-    }
-}
-
-json JsonParser::getJsonData() const {
-    return data_;
 }
 
 std::vector<VideoInfo> JsonParser::getVideoList() const {
-    std::vector<VideoInfo> videoList;
-
-    if (!isParsed_ || !data_.contains("list") || !data_["list"].is_array()) {
-        return videoList;
-    }
-
-    for (const auto& videoJson : data_["list"]) {
-        videoList.push_back(parseVideoInfo(videoJson));
-    }
-
-    return videoList;
+    return getVideoListWithStats().videos;
 }
 
-VideoInfo JsonParser::getVideoById(int vodId) const {
-    VideoInfo videoInfo;
+VideoParseResult JsonParser::getVideoListWithStats() const {
+    VideoParseResult result;
 
     if (!isParsed_ || !data_.contains("list") || !data_["list"].is_array()) {
-        return videoInfo;
+        return result;
     }
 
     for (const auto& videoJson : data_["list"]) {
-        if (videoJson.contains("vod_id") && videoJson["vod_id"].get<int>() == vodId) {
-            return parseVideoInfo(videoJson);
+        try {
+            result.videos.push_back(parseVideoInfo(videoJson));
+        } catch (const json::exception& e) {
+            result.skippedCount++;
+            logError("视频条目解析失败: source=", source_, ", error=", e.what());
+        } catch (const std::exception& e) {
+            result.skippedCount++;
+            logError("视频条目解析异常: source=", source_, ", error=", e.what());
         }
     }
 
-    return videoInfo;
-}
-
-std::vector<VideoInfo> JsonParser::searchVideosByName(const std::string& name) const {
-    std::vector<VideoInfo> results;
-
-    if (!isParsed_ || !data_.contains("list") || !data_["list"].is_array()) {
-        return results;
-    }
-
-    std::string searchName = name;
-    std::transform(searchName.begin(), searchName.end(), searchName.begin(), ::tolower);
-
-    for (const auto& videoJson : data_["list"]) {
-        if (videoJson.contains("vod_name")) {
-            std::string vodName = videoJson["vod_name"].get<std::string>();
-            std::transform(vodName.begin(), vodName.end(), vodName.begin(), ::tolower);
-
-            if (vodName.find(searchName) != std::string::npos) {
-                results.push_back(parseVideoInfo(videoJson));
-            }
-        }
-    }
-
-    return results;
-}
-
-std::map<std::string, int> JsonParser::getCategoryStatistics() const {
-    std::map<std::string, int> statistics;
-
-    if (!isParsed_ || !data_.contains("list") || !data_["list"].is_array()) {
-        return statistics;
-    }
-
-    for (const auto& videoJson : data_["list"]) {
-        if (videoJson.contains("type_name")) {
-            std::string category = videoJson["type_name"].get<std::string>();
-            statistics[category]++;
-        }
-    }
-
-    return statistics;
+    return result;
 }
 
 VideoInfo JsonParser::parseVideoInfo(const json& videoJson) const {
@@ -134,8 +123,11 @@ VideoInfo JsonParser::parseVideoInfo(const json& videoJson) const {
         std::vector<std::string> playFromList = splitString(playFrom, "$$$");
         std::vector<std::string> playUrlList = splitString(playUrl, "$$$");
 
-        // 确保两个列表长度相同
-        assert(playFromList.size() == playUrlList.size() && "vod_play_from和vod_play_url的长度不匹配");
+        if (playFromList.size() != playUrlList.size()) {
+            logInfo("播放源与播放地址数量不匹配: name=", info.vod_name,
+                    ", from=", playFromList.size(), ", url=", playUrlList.size());
+        }
+
         size_t size = std::min(playFromList.size(), playUrlList.size());
 
         for (size_t i = 0; i < size; i++) {

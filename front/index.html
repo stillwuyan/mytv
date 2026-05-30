@@ -4,34 +4,97 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MyTV</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/player.css">
+    <link rel="stylesheet" href="css/catalog.css">
     <script src="https://cdn.jsdelivr.net/npm/artplayer/dist/artplayer.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 </head>
 <body>
-    <div class="container">
-        <div class="artplayer" id="videoPlayer">
-            <div class="artplayer-app"></div>
+    <div class="app-shell">
+        <header class="topbar panel">
+            <div class="brand-block">
+                <div class="brand-title">MyTV</div>
+                <div class="brand-subtitle">本地聚合搜索与播放</div>
+            </div>
+
+            <div class="player-controls">
+                <button id="backButton" class="back-button hidden">返回列表</button>
+                <div class="search-container">
+                    <input type="text" id="searchInput" placeholder="例如：凡人修仙传">
+                    <button id="searchButton" class="search-button">搜索视频</button>
+                    <button id="updateSitesButton" class="back-button" type="button">更新站点</button>
+                </div>
+            </div>
+        </header>
+
+        <div id="searchStatusBar" class="search-status-bar hidden" role="status" aria-live="polite">
+            <span class="search-status-spinner" aria-hidden="true"></span>
+            <span id="searchStatusText">正在搜索资源...</span>
         </div>
 
-        <div class="player-controls">
-            <button id="backButton" class="back-button hidden">返回</button>
-            <div class="search-container">
-                <button id="searchButton" class="search-button">搜索</button>
-                <input type="text" id="searchInput" placeholder="输入搜索关键词" value="凡人修仙传">
+        <div id="modalOverlay" class="modal-overlay hidden" aria-hidden="true">
+            <div id="modalCard" class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+                <div class="modal-header">
+                    <div class="modal-title-group">
+                        <div id="modalIcon" class="modal-icon" aria-hidden="true">i</div>
+                        <div id="modalTitle" class="modal-title">提示</div>
+                    </div>
+                    <button id="modalClose" class="modal-close-button" type="button" aria-label="关闭">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div id="modalMessage" class="modal-message"></div>
+                <div class="modal-actions">
+                    <button id="modalCancel" class="modal-button modal-button-secondary hidden" type="button">取消</button>
+                    <button id="modalConfirm" class="modal-button modal-button-primary" type="button">确定</button>
+                </div>
             </div>
         </div>
 
-        <div id="videoListContainer">
-            <div class="video-list" id="videoList"></div>
-        </div>
+        <section class="player-panel panel">
+            <div class="player-wrapper" id="videoPlayer">
+                <div class="player-app"></div>
+                <div class="player-empty" id="playerEmpty">选择影片和剧集后开始播放</div>
+            </div>
 
-        <div id="sourceListContainer" class="hidden">
-            <div class="source-tabs" id="sourceTabs"></div>
-            <div class="source-content" id="sourceContent"></div>
-        </div>
+            <div class="player-meta">
+                <div class="player-meta-title" id="nowPlayingTitle">尚未开始播放</div>
+                <div class="player-meta-details" id="nowPlayingMeta">支持从多个资源源聚合搜索并播放</div>
+            </div>
+        </section>
+
+        <section class="content-panel panel">
+            <div id="videoListContainer">
+                <div class="section-heading">
+                    <div>
+                        <div class="section-title">影片目录</div>
+                        <div class="section-subtitle">按影片名称聚合不同资源站结果</div>
+                    </div>
+                </div>
+                <div class="video-list" id="videoList"></div>
+            </div>
+
+            <div id="sourceListContainer" class="hidden">
+                <div class="section-heading">
+                    <div>
+                        <div class="section-title">资源详情</div>
+                        <div class="section-subtitle">切换不同站点并选择可播放剧集</div>
+                    </div>
+                </div>
+                <div class="source-tabs" id="sourceTabs"></div>
+                <div class="source-content" id="sourceContent"></div>
+            </div>
+        </section>
+
+        <footer class="page-footer">
+            <div class="page-footer-inner">MyTV Local Cinema Archive</div>
+        </footer>
     </div>
 
-    <script src="script.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/player.js"></script>
+    <script src="js/views.js"></script>
+    <script src="js/app.js"></script>
 </body>
 </html>

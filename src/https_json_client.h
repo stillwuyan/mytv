@@ -3,8 +3,6 @@
 #define HTTPS_JSON_CLIENT_H
 
 #include <string>
-#include <map>
-#include <memory>
 #include <curl/curl.h>
 
 class HTTPSJsonClient {
@@ -23,17 +21,8 @@ public:
     void setRequestTimeout(long timeout);      // 请求超时（秒）
     void setVerifySSL(bool verify);            // 是否验证SSL
     void setUserAgent(const std::string& ua);  // 设置User-Agent
-    void setProxy(const std::string& proxy);   // 设置代理
-
-    // 设置自定义HTTP头
-    void setHeader(const std::string& key, const std::string& value);
-    void clearHeaders();
-
     // 执行GET请求
     std::string get(const std::string& url);
-
-    // 执行POST请求
-    std::string post(const std::string& url, const std::string& data);
 
     // 获取最后一次错误信息
     std::string getLastError() const;
@@ -68,10 +57,6 @@ private:
     long requestTimeout_;
     bool verifySSL_;
     std::string userAgent_;
-    std::string proxy_;
-
-    // HTTP头
-    std::map<std::string, std::string> customHeaders_;
 };
 
 #endif // HTTPS_JSON_CLIENT_H

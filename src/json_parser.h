@@ -10,7 +10,7 @@ using json = nlohmann::json;
 
 // 视频信息结构体
 struct VideoInfo {
-    int vod_id;
+    int vod_id = 0;
     std::string source;
     std::string vod_name;
     std::string vod_sub;
@@ -20,31 +20,23 @@ struct VideoInfo {
     std::map<std::string, std::vector<std::pair<std::string, std::string>>> play_urls;
 };
 
+struct VideoParseResult {
+    std::vector<VideoInfo> videos;
+    std::size_t skippedCount = 0;
+};
+
 class JsonParser {
 public:
     JsonParser();
-    ~JsonParser();
 
     // 从文件解析JSON
     bool parseFromFile(const std::string& filePath);
 
-    // 从字符串解析JSON
-    bool parseFromString(const std::string& jsonString);
-
-    // 获取解析后的JSON对象
-    json getJsonData() const;
-
     // 获取视频列表
     std::vector<VideoInfo> getVideoList() const;
 
-    // 根据视频ID获取视频信息
-    VideoInfo getVideoById(int vodId) const;
-
-    // 根据视频名称搜索视频
-    std::vector<VideoInfo> searchVideosByName(const std::string& name) const;
-
-    // 获取所有视频的分类统计
-    std::map<std::string, int> getCategoryStatistics() const;
+    // 获取视频列表及跳过统计
+    VideoParseResult getVideoListWithStats() const;
 
 private:
     // 解析单个视频信息

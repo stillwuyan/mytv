@@ -1,6 +1,9 @@
 #include "https_json_client.h"
-#include <sstream>
-#include <iostream>
+#include <mutex>
+
+namespace {
+std::once_flag g_curlInitFlag;
+}
 
 HTTPSJsonClient::HTTPSJsonClient()
     : curl_(nullptr)
@@ -10,7 +13,9 @@ HTTPSJsonClient::HTTPSJsonClient()
     , requestTimeout_(30L)
     , verifySSL_(true)
     , userAgent_("HTTPSJsonClient/1.0") {
-    curl_global_init(CURL_GLOBAL_DEFAULT);
+    std::call_once(g_curlInitFlag, []() {
+        curl_global_init(CURL_GLOBAL_DEFAULT);
+    });
 }
 
 HTTPSJsonClient::~HTTPSJsonClient() {
@@ -22,7 +27,6 @@ HTTPSJsonClient::~HTTPSJsonClient() {
         curl_easy_cleanup(curl_);
         curl_ = nullptr;
     }
-    curl_global_cleanup();
 }
 
 void HTTPSJsonClient::setConnectTimeout(long timeout) {
@@ -39,22 +43,6 @@ void HTTPSJsonClient::setVerifySSL(bool verify) {
 
 void HTTPSJsonClient::setUserAgent(const std::string& ua) {
     userAgent_ = ua;
-}
-
-void HTTPSJsonClient::setProxy(const std::string& proxy) {
-    proxy_ = proxy;
-}
-
-void HTTPSJsonClient::setHeader(const std::string& key, const std::string& value) {
-    customHeaders_[key] = value;
-}
-
-void HTTPSJsonClient::clearHeaders() {
-    customHeaders_.clear();
-    if (headers_) {
-        curl_slist_free_all(headers_);
-        headers_ = nullptr;
-    }
 }
 
 size_t HTTPSJsonClient::writeCallback(void* contents, size_t size, size_t nmemb, std::string* output) {
@@ -88,20 +76,10 @@ void HTTPSJsonClient::setCommonOptions(CURL* curl, const std::string& url) {
         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
     }
 
-    // 代理设置
-    if (!proxy_.empty()) {
-        curl_easy_setopt(curl, CURLOPT_PROXY, proxy_.c_str());
-    }
-
     // 设置HTTP头
     if (headers_) {
         curl_slist_free_all(headers_);
         headers_ = nullptr;
-    }
-
-    for (const auto& header : customHeaders_) {
-        std::string headerStr = header.first + ": " + header.second;
-        headers_ = curl_slist_append(headers_, headerStr.c_str());
     }
 
     // 添加Accept头（表示期望接收JSON）
@@ -112,6 +90,9 @@ void HTTPSJsonClient::setCommonOptions(CURL* curl, const std::string& url) {
 
 std::string HTTPSJsonClient::performRequest(CURL* curl) {
     std::string response;
+    lastError_.clear();
+    lastStatusCode_ = 0;
+
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeCallback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
 
@@ -145,22 +126,9 @@ std::string HTTPSJsonClient::urlEncode(const std::string& str) {
 std::string HTTPSJsonClient::get(const std::string& url) {
     initCurl();
     setCommonOptions(curl_, url);
-    return performRequest(curl_);
-}
-
-std::string HTTPSJsonClient::post(const std::string& url, const std::string& data) {
-    initCurl();
-    setCommonOptions(curl_, url);
-
-    // POST请求特有设置
-    curl_easy_setopt(curl_, CURLOPT_POST, 1L);
-    curl_easy_setopt(curl_, CURLOPT_POSTFIELDS, data.c_str());
-    curl_easy_setopt(curl_, CURLOPT_POSTFIELDSIZE, data.length());
-
-    // 设置Content-Type为JSON
-    headers_ = curl_slist_append(headers_, "Content-Type: application/json");
-    curl_easy_setopt(curl_, CURLOPT_HTTPHEADER, headers_);
-
+    curl_easy_setopt(curl_, CURLOPT_HTTPGET, 1L);
+    curl_easy_setopt(curl_, CURLOPT_POSTFIELDS, nullptr);
+    curl_easy_setopt(curl_, CURLOPT_POSTFIELDSIZE, 0L);
     return performRequest(curl_);
 }
 
